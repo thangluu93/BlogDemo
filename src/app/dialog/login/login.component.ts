@@ -1,3 +1,4 @@
+import { async } from '@angular/core/testing';
 import { UserDataService } from './../../services/user-data.service';
 import { Validators, FormControl, MinLengthValidator } from "@angular/forms";
 import { MatDialog, MatDialogRef } from "@angular/material/dialog";
@@ -5,9 +6,11 @@ import { Component, OnInit, Input, Output } from "@angular/core";
 import { AngularFireAuth } from "@angular/fire/auth";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { auth } from 'firebase';
+import { Router } from '@angular/router';
 
 @Component({
   templateUrl: "./login.component.html",
+  selector: "app-login",
   styleUrls: ["./login.component.scss"]
 })
 export class LoginComponent implements OnInit {
@@ -16,6 +19,7 @@ export class LoginComponent implements OnInit {
     public afAuth: AngularFireAuth,
     public SnackBar: MatSnackBar,
     public UserDataService:UserDataService,
+    public Router:Router,
   ) {}
 
   isSignUp = true;
@@ -65,8 +69,8 @@ export class LoginComponent implements OnInit {
       this.password.hasError('minLength')?'Your password must have at least 8 characters':'';
   }
     
-  getRetypePasswordError(){
-     return this.password.hasError('required')? 'You must enter password':
+  getRetypePasswordEror(){
+     return this.password.hasError('required')? 'You must enter passord':
         this.password.hasError('pattern')?  'You must retype correctly': '';
   }
 
@@ -76,24 +80,24 @@ export class LoginComponent implements OnInit {
   }
 
   login(){
-    this.afAuth.auth.signInWithEmailAndPassword(this.email.value,this.password.value).then(()=>{
+    this.afAuth.auth.signInWithEmailAndPassword(this.email.value,this.password.value).then(async()=>{
+      await this.UserDataService.userRegister(this.afAuth.auth.currentUser.uid);
       this.SnackBar.open('Login Successfull','OK',{duration:2000});
       this.diaglogRef.close();
+
     }).catch((err)=>{this.SnackBar.open('Login failed','OK',{duration:2000})})
   }
 
-  @Input()
-  public data:any;
   
   loginWithGG(){
     const provider = new auth.GoogleAuthProvider();
-    this.afAuth.auth.signInWithPopup(provider).then((result)=>{
+    this.afAuth.auth.signInWithPopup(provider).then(async()=>{
       // console.log(result.user.photoURL);
-      this.data=result.user;
       
+      await this.UserDataService.userRegister(this.afAuth.auth.currentUser.uid);
       this.SnackBar.open('Go yah!','OK',{duration:2000});
       this.diaglogRef.close();
-      
+      this.Router.navigate(['/home'])
     }).catch((err)=>{
       this.SnackBar.open(err,'OK',{duration:2000});
     })
